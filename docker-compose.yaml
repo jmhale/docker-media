@@ -1,0 +1,327 @@
+version: '3.3'
+networks:
+  backend:
+  frontend:
+    external: true
+volumes:
+  nginx-certs:
+services:
+  plex:
+    hostname: plex
+    image: linuxserver/plex
+    restart: always
+    ports:
+      - "32400:32400"
+    environment:
+      - VERSION=latest
+      - PUID=1002
+      - PGID=2001
+      - TZ=Etc/UTC
+    volumes:
+      - /root/docker/storage/plex/config:/config
+      - /root/docker/storage/plex/cache:/cache
+      - /nfs/media/movies:/media/movies:ro
+      - /nfs/media/tv:/media/tv:ro
+      - /nfs/media/music:/media/music:ro
+    networks:
+      - frontend
+    labels:
+      - "traefik.enable=true"
+      - "traefik.backend=plexms"
+      - "traefik.frontend.rule=Host:plex.${DOMAINNAME}"
+      - "traefik.port=32400"
+      - "traefik.protocol=http"
+      - "traefik.docker.network=frontend"
+      - "traefik.frontend.headers.SSLRedirect=true"
+      - "traefik.frontend.headers.STSSeconds=315360000"
+      - "traefik.frontend.headers.browserXSSFilter=true"
+      - "traefik.frontend.headers.contentTypeNosniff=true"
+      - "traefik.frontend.headers.forceSTSHeader=true"
+      - "traefik.frontend.headers.SSLHost=example.com"
+      - "traefik.frontend.headers.STSIncludeSubdomains=true"
+      - "traefik.frontend.headers.STSPreload=true"
+      - "traefik.frontend.headers.customFrameOptionsValue: allow-from https:${DOMAINNAME}"
+  plexpy:
+    hostname: plexpy
+    image: linuxserver/tautulli
+    restart: always
+    depends_on:
+      - plex
+    environment:
+      - TZ=Etc/UTC
+      - PUID=1002
+      - PGID=2001
+    volumes:
+      - /nfs/other/docker/config/plexpy/config:/config
+      - /root/docker/storage/plex/config/Library/Application\ Support/Plex\ Media\ Server/Logs/:/logs:ro
+    networks:
+      - frontend
+    labels:
+      - "traefik.enable=true"
+      - "traefik.backend=plexpy"
+      - "traefik.frontend.rule=Host:tautulli.${DOMAINNAME}"
+      - "traefik.port=8181"
+      - "traefik.protocol=http"
+      - "traefik.docker.network=frontend"
+      - "traefik.frontend.headers.SSLRedirect=true"
+      - "traefik.frontend.headers.STSSeconds=315360000"
+      - "traefik.frontend.headers.browserXSSFilter=true"
+      - "traefik.frontend.headers.contentTypeNosniff=true"
+      - "traefik.frontend.headers.forceSTSHeader=true"
+      - "traefik.frontend.headers.SSLHost=example.com"
+      - "traefik.frontend.headers.STSIncludeSubdomains=true"
+      - "traefik.frontend.headers.STSPreload=true"
+      - "traefik.frontend.headers.customFrameOptionsValue: allow-from https:${DOMAINNAME}"
+  sonarr:
+    hostname: sonarr
+    image: linuxserver/sonarr
+    depends_on:
+      - sabnzbd
+    ulimits:
+      nofile:
+        soft: 4096
+        hard: 4096
+    restart: always
+    environment:
+      - PUID=3001
+      - PGID=2001
+      - TZ=Etc/UTC
+    volumes:
+      - /nfs/other/docker/config/sonarr/config:/config
+      - /nfs/media/tv:/media/tv
+      - /root/docker/storage/sabnzbd/downloads:/downloads
+    networks:
+      - frontend
+    labels:
+      - "traefik.enable=true"
+      - "traefik.backend=sonarr"
+      - "traefik.frontend.rule=Host:sonarr.${DOMAINNAME}"
+      - "traefik.port=8989"
+      - "traefik.protocol=http"
+      - "traefik.docker.network=frontend"
+      - "traefik.frontend.headers.SSLRedirect=true"
+      - "traefik.frontend.headers.STSSeconds=315360000"
+      - "traefik.frontend.headers.browserXSSFilter=true"
+      - "traefik.frontend.headers.contentTypeNosniff=true"
+      - "traefik.frontend.headers.forceSTSHeader=true"
+      - "traefik.frontend.headers.SSLHost=example.com"
+      - "traefik.frontend.headers.STSIncludeSubdomains=true"
+      - "traefik.frontend.headers.STSPreload=true"
+      - "traefik.frontend.headers.customFrameOptionsValue: allow-from https:${DOMAINNAME}"
+      - "traefik.frontend.auth.forward.address=http://oauth:4181"
+      - "traefik.frontend.auth.forward.authResponseHeaders=X-Forwarded-User"
+      - "traefik.frontend.auth.forward.trustForwardHeader=true"
+  radarr:
+    hostname: radarr
+    image: linuxserver/radarr
+    depends_on:
+      - sabnzbd
+    ulimits:
+      nofile:
+        soft: 4096
+        hard: 4096
+    restart: always
+    environment:
+      - PUID=3001
+      - PGID=2001
+      - TZ=Etc/UTC
+    volumes:
+      - /nfs/other/docker/config/radarr/config:/config
+      - /nfs/media/movies:/media/movies
+      - /root/docker/storage/sabnzbd/downloads:/downloads
+    networks:
+      - frontend
+    labels:
+      - "traefik.enable=true"
+      - "traefik.backend=radarr"
+      - "traefik.frontend.rule=Host:radarr.${DOMAINNAME}"
+      - "traefik.port=7878"
+      - "traefik.protocol=http"
+      - "traefik.docker.network=frontend"
+      - "traefik.frontend.headers.SSLRedirect=true"
+      - "traefik.frontend.headers.STSSeconds=315360000"
+      - "traefik.frontend.headers.browserXSSFilter=true"
+      - "traefik.frontend.headers.contentTypeNosniff=true"
+      - "traefik.frontend.headers.forceSTSHeader=true"
+      - "traefik.frontend.headers.SSLHost=example.com"
+      - "traefik.frontend.headers.STSIncludeSubdomains=true"
+      - "traefik.frontend.headers.STSPreload=true"
+      - "traefik.frontend.headers.customFrameOptionsValue: allow-from https:${DOMAINNAME}"
+      - "traefik.frontend.auth.forward.address=http://oauth:4181"
+      - "traefik.frontend.auth.forward.authResponseHeaders=X-Forwarded-User"
+      - "traefik.frontend.auth.forward.trustForwardHeader=true"
+  sabnzbd:
+     hostname: sabnzbd
+     image: linuxserver/sabnzbd
+     ulimits:
+       nofile:
+         soft: 4096
+         hard: 4096
+     restart: always
+     environment:
+       - PGID=2001
+       - PUID=3001
+       - TZ=Etc/UTC
+     volumes:
+       - /nfs/other/docker/config/sabnzbd/config:/config
+       - /root/docker/storage/sabnzbd/downloads:/downloads
+       - /root/docker/storage/sabnzbd/incomplete:/incomplete-downloads
+     networks:
+       - frontend
+     labels:
+       - "traefik.enable=true"
+       - "traefik.backend=sabnzbd"
+       - "traefik.frontend.rule=Host:sabnzbd.${DOMAINNAME}"
+       - "traefik.port=8080"
+       - "traefik.protocol=http"
+       - "traefik.docker.network=frontend"
+       - "traefik.frontend.headers.SSLRedirect=true"
+       - "traefik.frontend.headers.STSSeconds=315360000"
+       - "traefik.frontend.headers.browserXSSFilter=true"
+       - "traefik.frontend.headers.contentTypeNosniff=true"
+       - "traefik.frontend.headers.forceSTSHeader=true"
+       - "traefik.frontend.headers.SSLHost=example.com"
+       - "traefik.frontend.headers.STSIncludeSubdomains=true"
+       - "traefik.frontend.headers.STSPreload=true"
+       - "traefik.frontend.headers.customFrameOptionsValue: allow-from https:${DOMAINNAME}"
+       - "traefik.frontend.auth.forward.address=http://oauth:4181"
+       - "traefik.frontend.auth.forward.authResponseHeaders=X-Forwarded-User"
+       - "traefik.frontend.auth.forward.trustForwardHeader=true"
+  heimdall:
+    hostname: heimdall
+    image: linuxserver/heimdall
+    restart: always
+    environment:
+      - PUID=5001
+      - PGID=5001
+      - TZ=Etc/UTC
+    volumes:
+      - /nfs/other/docker/config/heimdall/config:/config
+    networks:
+      - frontend
+    labels:
+      - "traefik.enable=true"
+      - "traefik.backend=heimdall"
+      - "traefik.frontend.rule=Host:heimdall.${DOMAINNAME}"
+      - "traefik.port=80"
+      - "traefik.protocol=http"
+      - "traefik.docker.network=frontend"
+      - "traefik.frontend.headers.SSLRedirect=true"
+      - "traefik.frontend.headers.STSSeconds=315360000"
+      - "traefik.frontend.headers.browserXSSFilter=true"
+      - "traefik.frontend.headers.contentTypeNosniff=true"
+      - "traefik.frontend.headers.forceSTSHeader=true"
+      - "traefik.frontend.headers.SSLHost=example.com"
+      - "traefik.frontend.headers.STSIncludeSubdomains=true"
+      - "traefik.frontend.headers.STSPreload=true"
+      - "traefik.frontend.headers.customFrameOptionsValue: allow-from https:${DOMAINNAME}"
+  traefik:
+    hostname: traefik
+    image: traefik:v1.7.16
+    restart: always
+    domainname: ${DOMAINNAME}
+    networks:
+      - frontend
+      - backend
+    ports:
+      - "80:80"
+      - "443:443"
+      - "8080:8080"
+    environment:
+      - PUID=5005
+      - PGID=5005
+      - CF_API_EMAIL=${CLOUDFLARE_EMAIL}
+      - CF_API_KEY=${CLOUDFLARE_API_KEY}
+    labels:
+      - "traefik.enable=true"
+      - "traefik.backend=traefik"
+      - "traefik.frontend.rule=Host:traefik.${DOMAINNAME}"
+      - "traefik.port=8080"
+      - "traefik.docker.network=frontend"
+      - "traefik.frontend.headers.SSLRedirect=true"
+      - "traefik.frontend.headers.STSSeconds=315360000"
+      - "traefik.frontend.headers.browserXSSFilter=true"
+      - "traefik.frontend.headers.contentTypeNosniff=true"
+      - "traefik.frontend.headers.forceSTSHeader=true"
+      - "traefik.frontend.headers.SSLHost=example.com"
+      - "traefik.frontend.headers.STSIncludeSubdomains=true"
+      - "traefik.frontend.headers.STSPreload=true"
+      - "traefik.frontend.headers.customFrameOptionsValue: allow-from https:${DOMAINNAME}"
+      # - "traefik.frontend.auth.basic.users=${HTTP_USERNAME}:${HTTP_PASSWORD}"
+      - "traefik.frontend.headers.frameDeny=true"
+      - "traefik.frontend.auth.forward.address=http://oauth:4181"
+      - "traefik.frontend.auth.forward.authResponseHeaders=X-Forwarded-User"
+      - "traefik.frontend.auth.forward.trustForwardHeader=true"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - /nfs/other/docker/config/traefik:/etc/traefik
+      - /nfs/other/docker/config/shared:/shared
+  portainer:
+    image: portainer/portainer
+    restart: always
+    command: -H unix:///var/run/docker.sock --no-auth
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - /nfs/other/docker/config/portainer/data:/data
+      - /nfs/other/docker/config/shared:/shared
+    environment:
+      - TZ=${TZ}
+    networks:
+      - frontend
+    labels:
+      - "traefik.enable=true"
+      - "traefik.backend=portainer"
+      - "traefik.frontend.rule=Host:portainer.${DOMAINNAME}"
+      - "traefik.port=9000"
+      - "traefik.docker.network=frontend"
+      - "traefik.frontend.headers.SSLRedirect=true"
+      - "traefik.frontend.headers.STSSeconds=315360000"
+      - "traefik.frontend.headers.browserXSSFilter=true"
+      - "traefik.frontend.headers.contentTypeNosniff=true"
+      - "traefik.frontend.headers.forceSTSHeader=true"
+      - "traefik.frontend.headers.SSLHost=example.com"
+      - "traefik.frontend.headers.STSIncludeSubdomains=true"
+      - "traefik.frontend.headers.STSPreload=true"
+      - "traefik.frontend.headers.customFrameOptionsValue: allow-from https:${DOMAINNAME}"
+      - "traefik.frontend.auth.forward.address=http://oauth:4181"
+      - "traefik.frontend.auth.forward.authResponseHeaders=X-Forwarded-User"
+      - "traefik.frontend.auth.forward.trustForwardHeader=true"
+  oauth:
+    image: thomseddon/traefik-forward-auth
+    hostname: oauth
+    restart: always
+    networks:
+      - frontend
+      - backend
+    environment:
+      - PROVIDERS_GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID}
+      - PROVIDERS_GOOGLE_CLIENT_SECRET=${GOOGLE_CLIENT_SECRET}
+      - SECRET=${OAUTH_SECRET}
+      - COOKIE_DOMAIN=${DOMAINNAME}
+      - INSECURE_COOKIE=false
+      - AUTH_HOST=oauth.${DOMAINNAME}
+      - URL_PATH=/_oauth
+      - WHITELIST=${MY_EMAIL}
+      - LOG_LEVEL=info
+      - LIFETIME=2592000 # 30 days
+    labels:
+      - "traefik.enable=true"
+      - "traefik.backend=oauth"
+      - "traefik.port=4181"
+      - "traefik.frontend.rule=Host:oauth.${DOMAINNAME}"
+      - "traefik.frontend.headers.SSLHost=oauth.${DOMAINNAME}"
+      - "traefik.docker.network=frontend"
+      - "traefik.frontend.passHostHeader=true"
+      - "traefik.frontend.headers.SSLForceHost=true"
+      - "traefik.frontend.headers.customResponseHeaders=X-Robots-Tag:noindex,nofollow,nosnippet,noarchive,notranslate,noimageindex"
+      - "traefik.frontend.headers.SSLRedirect=true"
+      - "traefik.frontend.headers.browserXSSFilter=true"
+      - "traefik.frontend.headers.contentTypeNosniff=true"
+      - "traefik.frontend.headers.forceSTSHeader=true"
+      - "traefik.frontend.headers.STSSeconds=315360000"
+      - "traefik.frontend.headers.STSIncludeSubdomains=true"
+      - "traefik.frontend.headers.STSPreload=true"
+      - "traefik.frontend.headers.frameDeny=true"
+      - "traefik.frontend.auth.forward.address=http://oauth:4181"
+      - "traefik.frontend.auth.forward.authResponseHeaders=X-Forwarded-User"
+      - "traefik.frontend.auth.forward.trustForwardHeader=true"
