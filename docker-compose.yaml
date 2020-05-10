@@ -27,20 +27,16 @@ services:
       - frontend
     labels:
       - "traefik.enable=true"
-      - "traefik.backend=plexms"
-      - "traefik.frontend.rule=Host:plex.${DOMAINNAME}"
-      - "traefik.port=32400"
-      - "traefik.protocol=http"
-      - "traefik.docker.network=frontend"
-      - "traefik.frontend.headers.SSLRedirect=true"
-      - "traefik.frontend.headers.STSSeconds=315360000"
-      - "traefik.frontend.headers.browserXSSFilter=true"
-      - "traefik.frontend.headers.contentTypeNosniff=true"
-      - "traefik.frontend.headers.forceSTSHeader=true"
-      - "traefik.frontend.headers.SSLHost=example.com"
-      - "traefik.frontend.headers.STSIncludeSubdomains=true"
-      - "traefik.frontend.headers.STSPreload=true"
-      - "traefik.frontend.headers.customFrameOptionsValue: allow-from https:${DOMAINNAME}"
+      - "traefik.http.middlewares.plex-redirect-redirectscheme.redirectscheme.scheme=https"
+      - "traefik.http.middlewares.plex-redirect-redirectscheme.redirectscheme.permanent=true"
+      - "traefik.http.routers.plex-http.rule=Host(`plex.${COMMON_DOMAIN}`)"
+      - "traefik.http.routers.plex-http.middlewares=plex-redirect-redirectscheme"
+      - "traefik.http.routers.plex-http.entrypoints=http"
+      - "traefik.http.routers.plex-https.rule=Host(`plex.${COMMON_DOMAIN}`)"
+      - "traefik.http.routers.plex-https.entrypoints=https"
+      - "traefik.http.routers.plex-https.service=plex-https"
+      - "traefik.http.routers.plex-https.tls.certresolver=cloudflare"
+      - "traefik.http.services.plex-https.loadbalancer.server.port=32400"
   plexpy:
     hostname: plexpy
     image: linuxserver/tautulli
@@ -58,20 +54,20 @@ services:
       - frontend
     labels:
       - "traefik.enable=true"
-      - "traefik.backend=plexpy"
-      - "traefik.frontend.rule=Host:tautulli.${DOMAINNAME}"
-      - "traefik.port=8181"
-      - "traefik.protocol=http"
-      - "traefik.docker.network=frontend"
-      - "traefik.frontend.headers.SSLRedirect=true"
-      - "traefik.frontend.headers.STSSeconds=315360000"
-      - "traefik.frontend.headers.browserXSSFilter=true"
-      - "traefik.frontend.headers.contentTypeNosniff=true"
-      - "traefik.frontend.headers.forceSTSHeader=true"
-      - "traefik.frontend.headers.SSLHost=example.com"
-      - "traefik.frontend.headers.STSIncludeSubdomains=true"
-      - "traefik.frontend.headers.STSPreload=true"
-      - "traefik.frontend.headers.customFrameOptionsValue: allow-from https:${DOMAINNAME}"
+      - "traefik.http.middlewares.tautulli-redirect-redirectscheme.redirectscheme.scheme=https"
+      - "traefik.http.middlewares.tautulli-redirect-redirectscheme.redirectscheme.permanent=true"
+      - "traefik.http.routers.tautulli-http.rule=Host(`tautulli.${COMMON_DOMAIN}`)"
+      - "traefik.http.routers.tautulli-http.middlewares=tautulli-redirect-redirectscheme"
+      - "traefik.http.routers.tautulli-http.entrypoints=http"
+      - "traefik.http.routers.tautulli-https.rule=Host(`tautulli.${COMMON_DOMAIN}`)"
+      - "traefik.http.routers.tautulli-https.entrypoints=https"
+      - "traefik.http.routers.tautulli-https.service=tautulli-https"
+      - "traefik.http.routers.tautulli-https.tls.certresolver=cloudflare"
+      - "traefik.http.services.tautulli-https.loadbalancer.server.port=8181"
+      - "traefik.http.middlewares.oauth.forwardauth.address=http://oauth:4181"
+      - "traefik.http.middlewares.oauth.forwardauth.trustForwardHeader=true"
+      - "traefik.http.middlewares.oauth.forwardauth.authResponseHeaders=X-Forwarded-User"
+      - "traefik.http.routers.tautulli-https.middlewares=oauth,authHeader"
   sonarr:
     hostname: sonarr
     image: linuxserver/sonarr
@@ -94,23 +90,20 @@ services:
       - frontend
     labels:
       - "traefik.enable=true"
-      - "traefik.backend=sonarr"
-      - "traefik.frontend.rule=Host:sonarr.${DOMAINNAME}"
-      - "traefik.port=8989"
-      - "traefik.protocol=http"
-      - "traefik.docker.network=frontend"
-      - "traefik.frontend.headers.SSLRedirect=true"
-      - "traefik.frontend.headers.STSSeconds=315360000"
-      - "traefik.frontend.headers.browserXSSFilter=true"
-      - "traefik.frontend.headers.contentTypeNosniff=true"
-      - "traefik.frontend.headers.forceSTSHeader=true"
-      - "traefik.frontend.headers.SSLHost=example.com"
-      - "traefik.frontend.headers.STSIncludeSubdomains=true"
-      - "traefik.frontend.headers.STSPreload=true"
-      - "traefik.frontend.headers.customFrameOptionsValue: allow-from https:${DOMAINNAME}"
-      - "traefik.frontend.auth.forward.address=http://oauth:4181"
-      - "traefik.frontend.auth.forward.authResponseHeaders=X-Forwarded-User"
-      - "traefik.frontend.auth.forward.trustForwardHeader=true"
+      - "traefik.http.middlewares.sonarr-redirect-redirectscheme.redirectscheme.scheme=https"
+      - "traefik.http.middlewares.sonarr-redirect-redirectscheme.redirectscheme.permanent=true"
+      - "traefik.http.routers.sonarr-http.rule=Host(`sonarr.${COMMON_DOMAIN}`)"
+      - "traefik.http.routers.sonarr-http.middlewares=sonarr-redirect-redirectscheme"
+      - "traefik.http.routers.sonarr-http.entrypoints=http"
+      - "traefik.http.routers.sonarr-https.rule=Host(`sonarr.${COMMON_DOMAIN}`)"
+      - "traefik.http.routers.sonarr-https.entrypoints=https"
+      - "traefik.http.routers.sonarr-https.service=sonarr-https"
+      - "traefik.http.routers.sonarr-https.tls.certresolver=cloudflare"
+      - "traefik.http.services.sonarr-https.loadbalancer.server.port=8989"
+      - "traefik.http.middlewares.oauth.forwardauth.address=http://oauth:4181"
+      - "traefik.http.middlewares.oauth.forwardauth.trustForwardHeader=true"
+      - "traefik.http.middlewares.oauth.forwardauth.authResponseHeaders=X-Forwarded-User"
+      - "traefik.http.routers.sonarr-https.middlewares=oauth,authHeader"
   radarr:
     hostname: radarr
     image: linuxserver/radarr
@@ -133,60 +126,54 @@ services:
       - frontend
     labels:
       - "traefik.enable=true"
-      - "traefik.backend=radarr"
-      - "traefik.frontend.rule=Host:radarr.${DOMAINNAME}"
-      - "traefik.port=7878"
-      - "traefik.protocol=http"
-      - "traefik.docker.network=frontend"
-      - "traefik.frontend.headers.SSLRedirect=true"
-      - "traefik.frontend.headers.STSSeconds=315360000"
-      - "traefik.frontend.headers.browserXSSFilter=true"
-      - "traefik.frontend.headers.contentTypeNosniff=true"
-      - "traefik.frontend.headers.forceSTSHeader=true"
-      - "traefik.frontend.headers.SSLHost=example.com"
-      - "traefik.frontend.headers.STSIncludeSubdomains=true"
-      - "traefik.frontend.headers.STSPreload=true"
-      - "traefik.frontend.headers.customFrameOptionsValue: allow-from https:${DOMAINNAME}"
-      - "traefik.frontend.auth.forward.address=http://oauth:4181"
-      - "traefik.frontend.auth.forward.authResponseHeaders=X-Forwarded-User"
-      - "traefik.frontend.auth.forward.trustForwardHeader=true"
+      - "traefik.http.middlewares.radarr-redirect-redirectscheme.redirectscheme.scheme=https"
+      - "traefik.http.middlewares.radarr-redirect-redirectscheme.redirectscheme.permanent=true"
+      - "traefik.http.routers.radarr-http.rule=Host(`radarr.${COMMON_DOMAIN}`)"
+      - "traefik.http.routers.radarr-http.middlewares=radarr-redirect-redirectscheme"
+      - "traefik.http.routers.radarr-http.entrypoints=http"
+      - "traefik.http.routers.radarr-https.rule=Host(`radarr.${COMMON_DOMAIN}`)"
+      - "traefik.http.routers.radarr-https.entrypoints=https"
+      - "traefik.http.routers.radarr-https.service=radarr-https"
+      - "traefik.http.routers.radarr-https.tls.certresolver=cloudflare"
+      - "traefik.http.services.radarr-https.loadbalancer.server.port=7878"
+      - "traefik.http.middlewares.oauth.forwardauth.address=http://oauth:4181"
+      - "traefik.http.middlewares.oauth.forwardauth.trustForwardHeader=true"
+      - "traefik.http.middlewares.oauth.forwardauth.authResponseHeaders=X-Forwarded-User"
+      - "traefik.http.routers.radarr-https.middlewares=oauth,authHeader"
   sabnzbd:
-     hostname: sabnzbd
-     image: linuxserver/sabnzbd
-     ulimits:
-       nofile:
-         soft: 4096
-         hard: 4096
-     restart: always
-     environment:
-       - PGID=2001
-       - PUID=3001
-       - TZ=Etc/UTC
-     volumes:
-       - /nfs/other/docker/config/sabnzbd/config:/config
-       - /root/docker/storage/sabnzbd/downloads:/downloads
-       - /root/docker/storage/sabnzbd/incomplete:/incomplete-downloads
-     networks:
-       - frontend
-     labels:
-       - "traefik.enable=true"
-       - "traefik.backend=sabnzbd"
-       - "traefik.frontend.rule=Host:sabnzbd.${DOMAINNAME}"
-       - "traefik.port=8080"
-       - "traefik.protocol=http"
-       - "traefik.docker.network=frontend"
-       - "traefik.frontend.headers.SSLRedirect=true"
-       - "traefik.frontend.headers.STSSeconds=315360000"
-       - "traefik.frontend.headers.browserXSSFilter=true"
-       - "traefik.frontend.headers.contentTypeNosniff=true"
-       - "traefik.frontend.headers.forceSTSHeader=true"
-       - "traefik.frontend.headers.SSLHost=example.com"
-       - "traefik.frontend.headers.STSIncludeSubdomains=true"
-       - "traefik.frontend.headers.STSPreload=true"
-       - "traefik.frontend.headers.customFrameOptionsValue: allow-from https:${DOMAINNAME}"
-       - "traefik.frontend.auth.forward.address=http://oauth:4181"
-       - "traefik.frontend.auth.forward.authResponseHeaders=X-Forwarded-User"
-       - "traefik.frontend.auth.forward.trustForwardHeader=true"
+    hostname: sabnzbd
+    image: linuxserver/sabnzbd
+    ulimits:
+     nofile:
+       soft: 4096
+       hard: 4096
+    restart: always
+    environment:
+     - PGID=2001
+     - PUID=3001
+     - TZ=Etc/UTC
+    volumes:
+     - /nfs/other/docker/config/sabnzbd/config:/config
+     - /root/docker/storage/sabnzbd/downloads:/downloads
+     - /root/docker/storage/sabnzbd/incomplete:/incomplete-downloads
+    networks:
+     - frontend
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.middlewares.sabnzbd-redirect-redirectscheme.redirectscheme.scheme=https"
+      - "traefik.http.middlewares.sabnzbd-redirect-redirectscheme.redirectscheme.permanent=true"
+      - "traefik.http.routers.sabnzbd-http.rule=Host(`sabnzbd.${COMMON_DOMAIN}`)"
+      - "traefik.http.routers.sabnzbd-http.middlewares=sabnzbd-redirect-redirectscheme"
+      - "traefik.http.routers.sabnzbd-http.entrypoints=http"
+      - "traefik.http.routers.sabnzbd-https.rule=Host(`sabnzbd.${COMMON_DOMAIN}`)"
+      - "traefik.http.routers.sabnzbd-https.entrypoints=https"
+      - "traefik.http.routers.sabnzbd-https.service=sabnzbd-https"
+      - "traefik.http.routers.sabnzbd-https.tls.certresolver=cloudflare"
+      - "traefik.http.services.sabnzbd-https.loadbalancer.server.port=8080"
+      - "traefik.http.middlewares.oauth.forwardauth.address=http://oauth:4181"
+      - "traefik.http.middlewares.oauth.forwardauth.trustForwardHeader=true"
+      - "traefik.http.middlewares.oauth.forwardauth.authResponseHeaders=X-Forwarded-User"
+      - "traefik.http.routers.sabnzbd-https.middlewares=oauth,authHeader"
   heimdall:
     hostname: heimdall
     image: linuxserver/heimdall
@@ -201,61 +188,60 @@ services:
       - frontend
     labels:
       - "traefik.enable=true"
-      - "traefik.backend=heimdall"
-      - "traefik.frontend.rule=Host:heimdall.${DOMAINNAME}"
-      - "traefik.port=80"
-      - "traefik.protocol=http"
-      - "traefik.docker.network=frontend"
-      - "traefik.frontend.headers.SSLRedirect=true"
-      - "traefik.frontend.headers.STSSeconds=315360000"
-      - "traefik.frontend.headers.browserXSSFilter=true"
-      - "traefik.frontend.headers.contentTypeNosniff=true"
-      - "traefik.frontend.headers.forceSTSHeader=true"
-      - "traefik.frontend.headers.SSLHost=example.com"
-      - "traefik.frontend.headers.STSIncludeSubdomains=true"
-      - "traefik.frontend.headers.STSPreload=true"
-      - "traefik.frontend.headers.customFrameOptionsValue: allow-from https:${DOMAINNAME}"
-  traefik:
-    hostname: traefik
-    image: traefik:v1.7.16
-    restart: always
-    domainname: ${DOMAINNAME}
-    networks:
-      - frontend
-      - backend
-    ports:
-      - "80:80"
-      - "443:443"
-      - "8080:8080"
-    environment:
-      - PUID=5005
-      - PGID=5005
-      - CF_API_EMAIL=${CLOUDFLARE_EMAIL}
-      - CF_API_KEY=${CLOUDFLARE_API_KEY}
-    labels:
-      - "traefik.enable=true"
-      - "traefik.backend=traefik"
-      - "traefik.frontend.rule=Host:traefik.${DOMAINNAME}"
-      - "traefik.port=8080"
-      - "traefik.docker.network=frontend"
-      - "traefik.frontend.headers.SSLRedirect=true"
-      - "traefik.frontend.headers.STSSeconds=315360000"
-      - "traefik.frontend.headers.browserXSSFilter=true"
-      - "traefik.frontend.headers.contentTypeNosniff=true"
-      - "traefik.frontend.headers.forceSTSHeader=true"
-      - "traefik.frontend.headers.SSLHost=example.com"
-      - "traefik.frontend.headers.STSIncludeSubdomains=true"
-      - "traefik.frontend.headers.STSPreload=true"
-      - "traefik.frontend.headers.customFrameOptionsValue: allow-from https:${DOMAINNAME}"
-      # - "traefik.frontend.auth.basic.users=${HTTP_USERNAME}:${HTTP_PASSWORD}"
-      - "traefik.frontend.headers.frameDeny=true"
-      - "traefik.frontend.auth.forward.address=http://oauth:4181"
-      - "traefik.frontend.auth.forward.authResponseHeaders=X-Forwarded-User"
-      - "traefik.frontend.auth.forward.trustForwardHeader=true"
-    volumes:
-      - /var/run/docker.sock:/var/run/docker.sock:ro
-      - /nfs/other/docker/config/traefik:/etc/traefik
-      - /nfs/other/docker/config/shared:/shared
+      - "traefik.http.middlewares.heimdall-redirect-redirectscheme.redirectscheme.scheme=https"
+      - "traefik.http.middlewares.heimdall-redirect-redirectscheme.redirectscheme.permanent=true"
+      - "traefik.http.routers.heimdall-http.rule=Host(`heimdall.${COMMON_DOMAIN}`)"
+      - "traefik.http.routers.heimdall-http.middlewares=heimdall-redirect-redirectscheme"
+      - "traefik.http.routers.heimdall-http.entrypoints=http"
+      - "traefik.http.routers.heimdall-https.rule=Host(`heimdall.${COMMON_DOMAIN}`)"
+      - "traefik.http.routers.heimdall-https.entrypoints=https"
+      - "traefik.http.routers.heimdall-https.service=heimdall-https"
+      - "traefik.http.routers.heimdall-https.tls.certresolver=cloudflare"
+      - "traefik.http.services.heimdall-https.loadbalancer.server.port=80"
+    traefik:
+      hostname: traefik
+      container_name: traefik
+      image: traefik:latest
+      restart: always
+      domainname: ${COMMON_DOMAIN}
+      command:
+        - "--log.level=DEBUG"
+        - "--api.insecure=true"
+        - "--providers.docker=true"
+        - "--providers.docker.exposedbydefault=false"
+        - "--entrypoints.http.address=:80"
+        - "--entrypoints.https.address=:443"
+        - "--certificatesresolvers.cloudflare.acme.dnschallenge=true"
+        - "--certificatesresolvers.cloudflare.acme.dnschallenge.provider=cloudflare"
+        - "--certificatesresolvers.cloudflare.acme.email=${COMMON_ADMIN_EMAIL}"
+        - "--certificatesresolvers.cloudflare.acme.storage=/letsencrypt/acme.json"
+      environment:
+        - CF_DNS_API_TOKEN=${CF_DNS_API_TOKEN}
+        - CF_ZONE_API_TOKEN=${CF_ZONE_API_TOKEN}
+      networks:
+        - frontend
+      ports:
+        - "80:80"
+        - "443:443"
+        - "8080:8080"
+      volumes:
+        - /var/run/docker.sock:/var/run/docker.sock:ro
+        - /root/docker/traefik/letsencrypt:/letsencrypt
+      labels:
+          - "traefik.enable=true"
+          - "traefik.http.routers.api.tls.certresolver=cloudflare"
+          - "traefik.http.routers.api.tls.domains[0].main=${COMMON_DOMAIN}"
+          - "traefik.http.routers.api.tls.domains[0].sans=*.${COMMON_DOMAIN}"
+          - "traefik.http.middlewares.traefik-redirect-redirectscheme.redirectscheme.scheme=https"
+          - "traefik.http.middlewares.traefik-redirect-redirectscheme.redirectscheme.permanent=true"
+          - "traefik.http.routers.traefik-http.rule=Host(`traefik.${COMMON_DOMAIN}`)"
+          - "traefik.http.routers.traefik-http.middlewares=traefik-redirect-redirectscheme"
+          - "traefik.http.routers.traefik-http.entrypoints=http"
+          - "traefik.http.routers.traefik-https.rule=Host(`traefik.${COMMON_DOMAIN}`)"
+          - "traefik.http.routers.traefik-https.entrypoints=https"
+          - "traefik.http.routers.traefik-https.service=traefik-https"
+          - "traefik.http.routers.traefik-https.tls.certresolver=cloudflare"
+          - "traefik.http.services.traefik-https.loadbalancer.server.port=8080"
   portainer:
     image: portainer/portainer
     restart: always
@@ -270,58 +256,46 @@ services:
       - frontend
     labels:
       - "traefik.enable=true"
-      - "traefik.backend=portainer"
-      - "traefik.frontend.rule=Host:portainer.${DOMAINNAME}"
-      - "traefik.port=9000"
-      - "traefik.docker.network=frontend"
-      - "traefik.frontend.headers.SSLRedirect=true"
-      - "traefik.frontend.headers.STSSeconds=315360000"
-      - "traefik.frontend.headers.browserXSSFilter=true"
-      - "traefik.frontend.headers.contentTypeNosniff=true"
-      - "traefik.frontend.headers.forceSTSHeader=true"
-      - "traefik.frontend.headers.SSLHost=example.com"
-      - "traefik.frontend.headers.STSIncludeSubdomains=true"
-      - "traefik.frontend.headers.STSPreload=true"
-      - "traefik.frontend.headers.customFrameOptionsValue: allow-from https:${DOMAINNAME}"
-      - "traefik.frontend.auth.forward.address=http://oauth:4181"
-      - "traefik.frontend.auth.forward.authResponseHeaders=X-Forwarded-User"
-      - "traefik.frontend.auth.forward.trustForwardHeader=true"
-  oauth:
-    image: thomseddon/traefik-forward-auth
-    hostname: oauth
-    restart: always
-    networks:
-      - frontend
-      - backend
-    environment:
-      - PROVIDERS_GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID}
-      - PROVIDERS_GOOGLE_CLIENT_SECRET=${GOOGLE_CLIENT_SECRET}
-      - SECRET=${OAUTH_SECRET}
-      - COOKIE_DOMAIN=${DOMAINNAME}
-      - INSECURE_COOKIE=false
-      - AUTH_HOST=oauth.${DOMAINNAME}
-      - URL_PATH=/_oauth
-      - WHITELIST=${MY_EMAIL}
-      - LOG_LEVEL=info
-      - LIFETIME=2592000 # 30 days
-    labels:
-      - "traefik.enable=true"
-      - "traefik.backend=oauth"
-      - "traefik.port=4181"
-      - "traefik.frontend.rule=Host:oauth.${DOMAINNAME}"
-      - "traefik.frontend.headers.SSLHost=oauth.${DOMAINNAME}"
-      - "traefik.docker.network=frontend"
-      - "traefik.frontend.passHostHeader=true"
-      - "traefik.frontend.headers.SSLForceHost=true"
-      - "traefik.frontend.headers.customResponseHeaders=X-Robots-Tag:noindex,nofollow,nosnippet,noarchive,notranslate,noimageindex"
-      - "traefik.frontend.headers.SSLRedirect=true"
-      - "traefik.frontend.headers.browserXSSFilter=true"
-      - "traefik.frontend.headers.contentTypeNosniff=true"
-      - "traefik.frontend.headers.forceSTSHeader=true"
-      - "traefik.frontend.headers.STSSeconds=315360000"
-      - "traefik.frontend.headers.STSIncludeSubdomains=true"
-      - "traefik.frontend.headers.STSPreload=true"
-      - "traefik.frontend.headers.frameDeny=true"
-      - "traefik.frontend.auth.forward.address=http://oauth:4181"
-      - "traefik.frontend.auth.forward.authResponseHeaders=X-Forwarded-User"
-      - "traefik.frontend.auth.forward.trustForwardHeader=true"
+      - "traefik.http.middlewares.portainer-redirect-redirectscheme.redirectscheme.scheme=https"
+      - "traefik.http.middlewares.portainer-redirect-redirectscheme.redirectscheme.permanent=true"
+      - "traefik.http.routers.portainer-http.rule=Host(`portainer.${COMMON_DOMAIN}`)"
+      - "traefik.http.routers.portainer-http.middlewares=portainer-redirect-redirectscheme"
+      - "traefik.http.routers.portainer-http.entrypoints=http"
+      - "traefik.http.routers.portainer-https.rule=Host(`portainer.${COMMON_DOMAIN}`)"
+      - "traefik.http.routers.portainer-https.entrypoints=https"
+      - "traefik.http.routers.portainer-https.service=portainer-https"
+      - "traefik.http.routers.portainer-https.tls.certresolver=cloudflare"
+      - "traefik.http.services.portainer-https.loadbalancer.server.port=9000"
+      - "traefik.http.middlewares.oauth.forwardauth.address=http://oauth:4181"
+      - "traefik.http.middlewares.oauth.forwardauth.trustForwardHeader=true"
+      - "traefik.http.middlewares.oauth.forwardauth.authResponseHeaders=X-Forwarded-User"
+      - "traefik.http.routers.portainer-https.middlewares=oauth,authHeader"
+    oauth:
+      image: thomseddon/traefik-forward-auth
+      hostname: oauth
+      container_name: oauth
+      restart: always
+      networks:
+        - frontend
+      environment:
+        - PROVIDERS_GOOGLE_CLIENT_ID=${OAUTH_CLIENT_ID}
+        - PROVIDERS_GOOGLE_CLIENT_SECRET=${OAUTH_CLIENT_SECRET}
+        - SECRET=${OAUTH_SECRET}
+        - COOKIE_DOMAIN=${COMMON_DOMAIN}
+        - INSECURE_COOKIE=false
+        - AUTH_HOST=oauth.${COMMON_DOMAIN}
+        - URL_PATH=/_oauth
+        - WHITELIST=${OAUTH_EMAIL_WHITELIST}
+        - LOG_LEVEL=info
+        - LIFETIME=2592000 # 30 days
+      labels:
+        - "traefik.enable=true"
+        - "traefik.http.routers.oauth.rule=Host(`oauth.${COMMON_DOMAIN}`)"
+        - "traefik.http.routers.oauth.entrypoints=https"
+        - "traefik.http.routers.oauth.service=oauth"
+        - "traefik.http.routers.oauth.tls.certresolver=cloudflare"
+        - "traefik.http.services.oauth.loadbalancer.server.port=4181"
+        - "traefik.http.middlewares.oauth.forwardauth.address=http://oauth:4181"
+        - "traefik.http.middlewares.oauth.forwardauth.trustForwardHeader=true"
+        - "traefik.http.middlewares.oauth.forwardauth.authResponseHeaders=X-Forwarded-User"
+        - "traefik.http.routers.oauth.middlewares=oauth"
