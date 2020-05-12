@@ -291,7 +291,6 @@ services:
       - INSECURE_COOKIE=false
       - AUTH_HOST=oauth.${COMMON_DOMAIN}
       - URL_PATH=/_oauth
-      - WHITELIST=${OAUTH_EMAIL_WHITELIST}
       - LOG_LEVEL=info
       - LIFETIME=2592000 # 30 days
     labels:
