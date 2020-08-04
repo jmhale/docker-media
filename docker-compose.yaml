@@ -174,6 +174,37 @@ services:
       - "traefik.http.middlewares.oauth.forwardauth.trustForwardHeader=true"
       - "traefik.http.middlewares.oauth.forwardauth.authResponseHeaders=X-Forwarded-User"
       - "traefik.http.routers.sabnzbd-https.middlewares=oauth"
+  qbittorrent:
+    image: linuxserver/qbittorrent
+    hostname: qbit
+    environment:
+      - PGID=2001
+      - PUID=3001
+      - TZ=Etc/UTC
+      - UMASK_SET=022
+      - WEBUI_PORT=8080
+    volumes:
+      - /nfs/other/docker/config/qbittorrent/config:/config
+      - /nfs/other/docker/config/qbittorrent/downloads:/downloads
+    restart: unless-stopped
+    networks:
+     - frontend
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.middlewares.qbittorrent-redirect-redirectscheme.redirectscheme.scheme=https"
+      - "traefik.http.middlewares.qbittorrent-redirect-redirectscheme.redirectscheme.permanent=true"
+      - "traefik.http.routers.qbittorrent-http.rule=Host(`qbit.${COMMON_DOMAIN}`)"
+      - "traefik.http.routers.qbittorrent-http.middlewares=qbittorrent-redirect-redirectscheme"
+      - "traefik.http.routers.qbittorrent-http.entrypoints=http"
+      - "traefik.http.routers.qbittorrent-https.rule=Host(`qbit.${COMMON_DOMAIN}`)"
+      - "traefik.http.routers.qbittorrent-https.entrypoints=https"
+      - "traefik.http.routers.qbittorrent-https.service=qbittorrent-https"
+      - "traefik.http.routers.qbittorrent-https.tls.certresolver=cloudflare"
+      - "traefik.http.services.qbittorrent-https.loadbalancer.server.port=8080"
+      - "traefik.http.middlewares.oauth.forwardauth.address=http://oauth:4181"
+      - "traefik.http.middlewares.oauth.forwardauth.trustForwardHeader=true"
+      - "traefik.http.middlewares.oauth.forwardauth.authResponseHeaders=X-Forwarded-User"
+      - "traefik.http.routers.qbittorrent-https.middlewares=oauth"
   heimdall:
     hostname: heimdall
     image: linuxserver/heimdall
