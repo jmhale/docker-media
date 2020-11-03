@@ -1,13 +1,13 @@
 version: '3.3'
 networks:
-  backend:
   frontend:
+  dockergraylog_logs:
     external: true
 volumes:
   nginx-certs:
 services:
   plex:
-    hostname: plex
+    container_name: plex
     image: linuxserver/plex
     restart: always
     ports:
@@ -38,7 +38,7 @@ services:
       - "traefik.http.routers.plex-https.tls.certresolver=cloudflare"
       - "traefik.http.services.plex-https.loadbalancer.server.port=32400"
   plexpy:
-    hostname: plexpy
+    container_name: plexpy
     image: linuxserver/tautulli
     restart: always
     depends_on:
@@ -69,7 +69,7 @@ services:
       - "traefik.http.middlewares.oauth.forwardauth.authResponseHeaders=X-Forwarded-User"
       - "traefik.http.routers.tautulli-https.middlewares=oauth"
   sonarr:
-    hostname: sonarr
+    container_name: sonarr
     image: linuxserver/sonarr
     depends_on:
       - sabnzbd
@@ -105,7 +105,7 @@ services:
       - "traefik.http.middlewares.oauth.forwardauth.authResponseHeaders=X-Forwarded-User"
       - "traefik.http.routers.sonarr-https.middlewares=oauth"
   radarr:
-    hostname: radarr
+    container_name: radarr
     image: linuxserver/radarr
     depends_on:
       - sabnzbd
@@ -141,7 +141,7 @@ services:
       - "traefik.http.middlewares.oauth.forwardauth.authResponseHeaders=X-Forwarded-User"
       - "traefik.http.routers.radarr-https.middlewares=oauth"
   sabnzbd:
-    hostname: sabnzbd
+    container_name: sabnzbd
     image: linuxserver/sabnzbd
     ulimits:
      nofile:
@@ -154,6 +154,7 @@ services:
      - TZ=Etc/UTC
     volumes:
      - /nfs/other/docker/config/sabnzbd/config:/config
+     - /nfs/secure/x:/x
      - /root/docker/storage/sabnzbd/downloads:/downloads
      - /root/docker/storage/sabnzbd/incomplete:/incomplete-downloads
     networks:
@@ -175,7 +176,7 @@ services:
       - "traefik.http.middlewares.oauth.forwardauth.authResponseHeaders=X-Forwarded-User"
       - "traefik.http.routers.sabnzbd-https.middlewares=oauth"
   heimdall:
-    hostname: heimdall
+    container_name: heimdall
     image: linuxserver/heimdall
     restart: always
     environment:
@@ -199,7 +200,6 @@ services:
       - "traefik.http.routers.heimdall-https.tls.certresolver=cloudflare"
       - "traefik.http.services.heimdall-https.loadbalancer.server.port=80"
   traefik:
-    hostname: traefik
     container_name: traefik
     image: traefik:latest
     restart: always
@@ -220,6 +220,7 @@ services:
       - CF_ZONE_API_TOKEN=${CF_ZONE_API_TOKEN}
     networks:
       - frontend
+      - dockergraylog_logs
     ports:
       - "80:80"
       - "443:443"
@@ -247,6 +248,7 @@ services:
         - "traefik.http.middlewares.oauth.forwardauth.authResponseHeaders=X-Forwarded-User"
         - "traefik.http.routers.traefik-https.middlewares=oauth"
   portainer:
+    container_name: portainer
     image: portainer/portainer
     restart: always
     command: -H unix:///var/run/docker.sock --no-auth
@@ -276,11 +278,11 @@ services:
       - "traefik.http.routers.portainer-https.middlewares=oauth"
   oauth:
     image: thomseddon/traefik-forward-auth
-    hostname: oauth
     container_name: oauth
     restart: always
     networks:
       - frontend
+      - dockergraylog_logs
     environment:
       - PROVIDERS_OIDC_CLIENT_ID=${PROVIDERS_OIDC_CLIENT_ID}
       - PROVIDERS_OIDC_CLIENT_SECRET=${PROVIDERS_OIDC_CLIENT_SECRET}
@@ -304,3 +306,23 @@ services:
       - "traefik.http.middlewares.oauth.forwardauth.trustForwardHeader=true"
       - "traefik.http.middlewares.oauth.forwardauth.authResponseHeaders=X-Forwarded-User"
       - "traefik.http.routers.oauth.middlewares=oauth"
+  openspeedtest:
+    container_name: openspeedtest
+    image: openspeedtest/latest
+    restart: always
+    networks:
+      - frontend
+    ports:
+      - 8081:8080
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.middlewares.openspeedtest-redirect-redirectscheme.redirectscheme.scheme=https"
+      - "traefik.http.middlewares.openspeedtest-redirect-redirectscheme.redirectscheme.permanent=true"
+      - "traefik.http.routers.openspeedtest-http.rule=Host(`speedtest.${COMMON_DOMAIN}`)"
+      - "traefik.http.routers.openspeedtest-http.middlewares=openspeedtest-redirect-redirectscheme"
+      - "traefik.http.routers.openspeedtest-http.entrypoints=http"
+      - "traefik.http.routers.openspeedtest-https.rule=Host(`speedtest.${COMMON_DOMAIN}`)"
+      - "traefik.http.routers.openspeedtest-https.entrypoints=https"
+      - "traefik.http.routers.openspeedtest-https.service=openspeedtest-https"
+      - "traefik.http.routers.openspeedtest-https.tls.certresolver=cloudflare"
+      - "traefik.http.services.openspeedtest-https.loadbalancer.server.port=8080"
