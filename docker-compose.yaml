@@ -1,8 +1,6 @@
 version: '3.3'
 networks:
   frontend:
-  dockergraylog_logs:
-    external: true
 volumes:
   nginx-certs:
 services:
@@ -18,11 +16,11 @@ services:
       - PGID=2001
       - TZ=Etc/UTC
     volumes:
-      - /root/docker/storage/plex/config:/config
-      - /root/docker/storage/plex/cache:/cache
+      - /nfs/other/docker/config/plex:/config
       - /nfs/media/movies:/media/movies:ro
       - /nfs/media/tv:/media/tv:ro
       - /nfs/media/music:/media/music:ro
+      - /home/docker/storage/plex/cache:/cache
     networks:
       - frontend
     labels:
@@ -37,37 +35,6 @@ services:
       - "traefik.http.routers.plex-https.service=plex-https"
       - "traefik.http.routers.plex-https.tls.certresolver=cloudflare"
       - "traefik.http.services.plex-https.loadbalancer.server.port=32400"
-  plexpy:
-    container_name: plexpy
-    image: linuxserver/tautulli
-    restart: always
-    depends_on:
-      - plex
-    environment:
-      - TZ=Etc/UTC
-      - PUID=1002
-      - PGID=2001
-    volumes:
-      - /nfs/other/docker/config/plexpy/config:/config
-      - /root/docker/storage/plex/config/Library/Application\ Support/Plex\ Media\ Server/Logs/:/logs:ro
-    networks:
-      - frontend
-    labels:
-      - "traefik.enable=true"
-      - "traefik.http.middlewares.tautulli-redirect-redirectscheme.redirectscheme.scheme=https"
-      - "traefik.http.middlewares.tautulli-redirect-redirectscheme.redirectscheme.permanent=true"
-      - "traefik.http.routers.tautulli-http.rule=Host(`tautulli.${COMMON_DOMAIN}`)"
-      - "traefik.http.routers.tautulli-http.middlewares=tautulli-redirect-redirectscheme"
-      - "traefik.http.routers.tautulli-http.entrypoints=http"
-      - "traefik.http.routers.tautulli-https.rule=Host(`tautulli.${COMMON_DOMAIN}`)"
-      - "traefik.http.routers.tautulli-https.entrypoints=https"
-      - "traefik.http.routers.tautulli-https.service=tautulli-https"
-      - "traefik.http.routers.tautulli-https.tls.certresolver=cloudflare"
-      - "traefik.http.services.tautulli-https.loadbalancer.server.port=8181"
-      - "traefik.http.middlewares.oauth.forwardauth.address=http://oauth:4181"
-      - "traefik.http.middlewares.oauth.forwardauth.trustForwardHeader=true"
-      - "traefik.http.middlewares.oauth.forwardauth.authResponseHeaders=X-Forwarded-User"
-      - "traefik.http.routers.tautulli-https.middlewares=oauth"
   sonarr:
     container_name: sonarr
     image: linuxserver/sonarr
@@ -83,9 +50,9 @@ services:
       - PGID=2001
       - TZ=Etc/UTC
     volumes:
-      - /nfs/other/docker/config/sonarr/config:/config
+      - /nfs/other/docker/config/sonarr:/config
       - /nfs/media/tv:/media/tv
-      - /root/docker/storage/sabnzbd/downloads:/downloads
+      - /home/docker/storage/sabnzbd/downloads:/downloads
     networks:
       - frontend
     labels:
@@ -119,9 +86,9 @@ services:
       - PGID=2001
       - TZ=Etc/UTC
     volumes:
-      - /nfs/other/docker/config/radarr/config:/config
+      - /nfs/other/docker/config/radarr:/config
       - /nfs/media/movies:/media/movies
-      - /root/docker/storage/sabnzbd/downloads:/downloads
+      - /home/docker/storage/sabnzbd/downloads:/downloads
     networks:
       - frontend
     labels:
@@ -153,10 +120,10 @@ services:
      - PUID=3001
      - TZ=Etc/UTC
     volumes:
-     - /nfs/other/docker/config/sabnzbd/config:/config
+     - /nfs/other/docker/config/sabnzbd:/config
      - /nfs/secure/x:/x
-     - /root/docker/storage/sabnzbd/downloads:/downloads
-     - /root/docker/storage/sabnzbd/incomplete:/incomplete-downloads
+     - /home/docker/storage/sabnzbd/downloads:/downloads
+     - /home/docker/storage/sabnzbd/incomplete:/incomplete-downloads
     networks:
      - frontend
     labels:
@@ -184,7 +151,7 @@ services:
       - PGID=5001
       - TZ=Etc/UTC
     volumes:
-      - /nfs/other/docker/config/heimdall/config:/config
+      - /nfs/other/docker/config/heimdall:/config
     networks:
       - frontend
     labels:
@@ -220,14 +187,14 @@ services:
       - CF_ZONE_API_TOKEN=${CF_ZONE_API_TOKEN}
     networks:
       - frontend
-      - dockergraylog_logs
     ports:
       - "80:80"
       - "443:443"
       - "8080:8080"
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock:ro
-      - /root/docker/traefik/letsencrypt:/letsencrypt
+      # - /home/docker/storage/traefik/letsencrypt:/letsencrypt
+      - /nfs/other/docker/config/traefik/letsencrypt:/letsencrypt
     labels:
         - "traefik.enable=true"
         - "traefik.http.routers.api.tls.certresolver=cloudflare"
@@ -247,42 +214,12 @@ services:
         - "traefik.http.middlewares.oauth.forwardauth.trustForwardHeader=true"
         - "traefik.http.middlewares.oauth.forwardauth.authResponseHeaders=X-Forwarded-User"
         - "traefik.http.routers.traefik-https.middlewares=oauth"
-  portainer:
-    container_name: portainer
-    image: portainer/portainer
-    restart: always
-    command: -H unix:///var/run/docker.sock --no-auth
-    volumes:
-      - /var/run/docker.sock:/var/run/docker.sock
-      - /nfs/other/docker/config/portainer/data:/data
-      - /nfs/other/docker/config/shared:/shared
-    environment:
-      - TZ=${TZ}
-    networks:
-      - frontend
-    labels:
-      - "traefik.enable=true"
-      - "traefik.http.middlewares.portainer-redirect-redirectscheme.redirectscheme.scheme=https"
-      - "traefik.http.middlewares.portainer-redirect-redirectscheme.redirectscheme.permanent=true"
-      - "traefik.http.routers.portainer-http.rule=Host(`portainer.${COMMON_DOMAIN}`)"
-      - "traefik.http.routers.portainer-http.middlewares=portainer-redirect-redirectscheme"
-      - "traefik.http.routers.portainer-http.entrypoints=http"
-      - "traefik.http.routers.portainer-https.rule=Host(`portainer.${COMMON_DOMAIN}`)"
-      - "traefik.http.routers.portainer-https.entrypoints=https"
-      - "traefik.http.routers.portainer-https.service=portainer-https"
-      - "traefik.http.routers.portainer-https.tls.certresolver=cloudflare"
-      - "traefik.http.services.portainer-https.loadbalancer.server.port=9000"
-      - "traefik.http.middlewares.oauth.forwardauth.address=http://oauth:4181"
-      - "traefik.http.middlewares.oauth.forwardauth.trustForwardHeader=true"
-      - "traefik.http.middlewares.oauth.forwardauth.authResponseHeaders=X-Forwarded-User"
-      - "traefik.http.routers.portainer-https.middlewares=oauth"
   oauth:
     image: thomseddon/traefik-forward-auth
     container_name: oauth
     restart: always
     networks:
       - frontend
-      - dockergraylog_logs
     environment:
       - PROVIDERS_OIDC_CLIENT_ID=${PROVIDERS_OIDC_CLIENT_ID}
       - PROVIDERS_OIDC_CLIENT_SECRET=${PROVIDERS_OIDC_CLIENT_SECRET}
@@ -326,3 +263,63 @@ services:
       - "traefik.http.routers.openspeedtest-https.service=openspeedtest-https"
       - "traefik.http.routers.openspeedtest-https.tls.certresolver=cloudflare"
       - "traefik.http.services.openspeedtest-https.loadbalancer.server.port=8080"
+  # portainer:
+  #   container_name: portainer
+  #   image: portainer/portainer
+  #   restart: always
+  #   command: -H unix:///var/run/docker.sock --no-auth
+  #   volumes:
+  #     - /var/run/docker.sock:/var/run/docker.sock
+  #     - /nfs/other/docker/config/portainer/data:/data
+  #     - /nfs/other/docker/config/shared:/shared
+  #   environment:
+  #     - TZ=${TZ}
+  #   networks:
+  #     - frontend
+  #   labels:
+  #     - "traefik.enable=true"
+  #     - "traefik.http.middlewares.portainer-redirect-redirectscheme.redirectscheme.scheme=https"
+  #     - "traefik.http.middlewares.portainer-redirect-redirectscheme.redirectscheme.permanent=true"
+  #     - "traefik.http.routers.portainer-http.rule=Host(`portainer.${COMMON_DOMAIN}`)"
+  #     - "traefik.http.routers.portainer-http.middlewares=portainer-redirect-redirectscheme"
+  #     - "traefik.http.routers.portainer-http.entrypoints=http"
+  #     - "traefik.http.routers.portainer-https.rule=Host(`portainer.${COMMON_DOMAIN}`)"
+  #     - "traefik.http.routers.portainer-https.entrypoints=https"
+  #     - "traefik.http.routers.portainer-https.service=portainer-https"
+  #     - "traefik.http.routers.portainer-https.tls.certresolver=cloudflare"
+  #     - "traefik.http.services.portainer-https.loadbalancer.server.port=9000"
+  #     - "traefik.http.middlewares.oauth.forwardauth.address=http://oauth:4181"
+  #     - "traefik.http.middlewares.oauth.forwardauth.trustForwardHeader=true"
+  #     - "traefik.http.middlewares.oauth.forwardauth.authResponseHeaders=X-Forwarded-User"
+  #     - "traefik.http.routers.portainer-https.middlewares=oauth"
+  # plexpy:
+  #   container_name: plexpy
+  #   image: linuxserver/tautulli
+  #   restart: always
+  #   depends_on:
+  #     - plex
+  #   environment:
+  #     - TZ=Etc/UTC
+  #     - PUID=1002
+  #     - PGID=2001
+  #   volumes:
+  #     - /nfs/other/docker/config/plexpy/config:/config
+  #     - /home/docker/storage/plex/config/Library/Application\ Support/Plex\ Media\ Server/Logs/:/logs:ro
+  #   networks:
+  #     - frontend
+  #   labels:
+  #     - "traefik.enable=true"
+  #     - "traefik.http.middlewares.tautulli-redirect-redirectscheme.redirectscheme.scheme=https"
+  #     - "traefik.http.middlewares.tautulli-redirect-redirectscheme.redirectscheme.permanent=true"
+  #     - "traefik.http.routers.tautulli-http.rule=Host(`tautulli.${COMMON_DOMAIN}`)"
+  #     - "traefik.http.routers.tautulli-http.middlewares=tautulli-redirect-redirectscheme"
+  #     - "traefik.http.routers.tautulli-http.entrypoints=http"
+  #     - "traefik.http.routers.tautulli-https.rule=Host(`tautulli.${COMMON_DOMAIN}`)"
+  #     - "traefik.http.routers.tautulli-https.entrypoints=https"
+  #     - "traefik.http.routers.tautulli-https.service=tautulli-https"
+  #     - "traefik.http.routers.tautulli-https.tls.certresolver=cloudflare"
+  #     - "traefik.http.services.tautulli-https.loadbalancer.server.port=8181"
+  #     - "traefik.http.middlewares.oauth.forwardauth.address=http://oauth:4181"
+  #     - "traefik.http.middlewares.oauth.forwardauth.trustForwardHeader=true"
+  #     - "traefik.http.middlewares.oauth.forwardauth.authResponseHeaders=X-Forwarded-User"
+  #     - "traefik.http.routers.tautulli-https.middlewares=oauth"
