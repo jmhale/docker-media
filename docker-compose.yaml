@@ -16,7 +16,7 @@ services:
       - PGID=2001
       - TZ=Etc/UTC
     volumes:
-      - /nfs/other/docker/config/plex:/config
+      - /nfs/media/config/plex:/config
       - /nfs/media/movies:/media/movies:ro
       - /nfs/media/tv:/media/tv:ro
       - /nfs/media/music:/media/music:ro
@@ -50,7 +50,7 @@ services:
       - PGID=2001
       - TZ=Etc/UTC
     volumes:
-      - /nfs/other/docker/config/sonarr:/config
+      - /nfs/media/config/sonarr:/config
       - /nfs/media/tv:/media/tv
       - /home/docker/storage/sabnzbd/downloads:/downloads
     networks:
@@ -86,7 +86,7 @@ services:
       - PGID=2001
       - TZ=Etc/UTC
     volumes:
-      - /nfs/other/docker/config/radarr:/config
+      - /nfs/media/config/radarr:/config
       - /nfs/media/movies:/media/movies
       - /home/docker/storage/sabnzbd/downloads:/downloads
     networks:
@@ -120,8 +120,8 @@ services:
      - PUID=3001
      - TZ=Etc/UTC
     volumes:
-     - /nfs/other/docker/config/sabnzbd:/config
-     - /nfs/secure/x:/x
+     - /nfs/media/config/sabnzbd:/config
+     - /nfs/x:/x
      - /home/docker/storage/sabnzbd/downloads:/downloads
      - /home/docker/storage/sabnzbd/incomplete:/incomplete-downloads
     networks:
@@ -151,7 +151,7 @@ services:
       - PGID=5001
       - TZ=Etc/UTC
     volumes:
-      - /nfs/other/docker/config/heimdall:/config
+      - /nfs/media/config/heimdall:/config
     networks:
       - frontend
     labels:
@@ -194,7 +194,7 @@ services:
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock:ro
       # - /home/docker/storage/traefik/letsencrypt:/letsencrypt
-      - /nfs/other/docker/config/traefik/letsencrypt:/letsencrypt
+      - /nfs/media/config/traefik/letsencrypt:/letsencrypt
     labels:
         - "traefik.enable=true"
         - "traefik.http.routers.api.tls.certresolver=cloudflare"
